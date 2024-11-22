@@ -1,0 +1,46 @@
+version: "3.1"
+
+services:
+  db:
+    image: mariadb
+    restart: "no"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: rhem
+      MYSQL_USER: rhemAdminer
+      MYSQL_PASSWORD: jS*5i9Q9Z9ox/_4lLVik'*z2KJNt<(1ZPo9Sr#ZiGJMW/1Br4yeJ%`bBzl5<'S+&
+    ports:
+      - 3306:3306
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - app_network  # Asegúrate de que el servicio db esté en la misma red
+
+  adminer:
+    image: adminer
+    restart: "no"
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+    environment:
+      ADMINER_DEFAULT_SERVER: db  # Aquí se asume que db es el nombre del servicio
+    networks:
+      - app_network  # Adminer debe estar en la misma red que db
+
+  apache:
+    image: httpd:latest
+    restart: "no"
+    ports:
+      - 80:80
+    volumes:
+      - ./erronka2_web:/usr/local/apache2/htdocs/  # Apache usa esta ruta para los archivos web
+    networks:
+      - app_network  # Apache también debe estar en la misma red
+
+volumes:
+  db_data:
+
+networks:
+  app_network:
+    driver: bridge
