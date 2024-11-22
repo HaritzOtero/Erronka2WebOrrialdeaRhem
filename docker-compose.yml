@@ -29,12 +29,12 @@ services:
       - app_network  # Adminer debe estar en la misma red que db
 
   apache:
-    image: httpd:latest
+    build: ./  # Usará el Dockerfile del directorio actual
     restart: "no"
     ports:
       - 80:80
     volumes:
-      - ./erronka2_web:/usr/local/apache2/htdocs/  # Apache usa esta ruta para los archivos web
+      - ./erronka2_web:/var/www/html/  # Apache usará esta ruta para los archivos web
     networks:
       - app_network  # Apache también debe estar en la misma red
 
