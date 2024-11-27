@@ -1,0 +1,22 @@
+Posibles vulnerabilidades: 
+
+1. Validación de campos:
+
+Los campos de error se están manejando con un array $error, pero no estás validando los campos antes de insertarlos en la base de datos. Esto significa que, incluso si hay un error en los datos, el formulario se enviará y el registro se intentará insertar sin validación.
+
+Solución: Deberías agregar validaciones para los campos antes de procesar el formulario y mostrar los errores en caso de que haya problemas.
+2. Imagen cargada:
+
+Estás moviendo el archivo de imagen con move_uploaded_file pero no estás validando el tipo de archivo ni el tamaño de la imagen, lo que podría ser un riesgo de seguridad.
+
+Solución: Asegúrate de validar el archivo subido (tipo y tamaño).
+3. Uso de md5 para contraseñas:
+
+Usar md5 para almacenar contraseñas no es seguro, ya que es vulnerable a ataques de diccionario y de colisión. Deberías usar un algoritmo de hash más seguro como password_hash() y password_verify() para la validación.
+
+Solución: Cambiar md5($data['password']) por password_hash($data['password'], PASSWORD_DEFAULT).
+4. Inyección SQL:
+
+Estás construyendo la consulta SQL directamente con los valores del formulario, lo que hace que el código sea susceptible a ataques de inyección SQL. Es mejor usar sentencias preparadas.
+
+Solución: Utiliza mysqli_prepare y mysqli_stmt_bind_param para prevenir inyección SQL.

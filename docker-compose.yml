@@ -8,39 +8,41 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: rhem
       MYSQL_USER: rhemAdminer
-      MYSQL_PASSWORD: jS*5i9Q9Z9ox/_4lLVik'*z2KJNt<(1ZPo9Sr#ZiGJMW/1Br4yeJ%`bBzl5<'S+&
+      MYSQL_PASSWORD: jS*5i9Q9Z9ox/_4lLVik'*z2KJNt<(1ZPo9Sr#ZiGJMW/1Br4yeJ%`bBzl5<'S+&  # Contraseña segura
     ports:
-      - 3306:3306
+      - "3306:3306"  # Puerto expuesto para conectarse a la base de datos
     volumes:
-      - db_data:/var/lib/mysql
+      - db_data:/var/lib/mysql  # Volumen para persistir datos
     networks:
-      - app_network  # Asegúrate de que el servicio db esté en la misma red
+      - app_network  # Red compartida para comunicarse con otros servicios
 
   adminer:
     image: adminer
     restart: "no"
     ports:
-      - 8080:8080
+      - "8080:8080"  # Puerto para acceder a Adminer
     depends_on:
-      - db
+      - db  # Asegura que el servicio db esté listo antes de iniciar Adminer
     environment:
-      ADMINER_DEFAULT_SERVER: db  # Aquí se asume que db es el nombre del servicio
+      ADMINER_DEFAULT_SERVER: db  # Nombre del servicio db como servidor por defecto
     networks:
-      - app_network  # Adminer debe estar en la misma red que db
+      - app_network  # Red compartida con db
 
   apache:
-    build: ./  # Usará el Dockerfile del directorio actual
+    build: ./  # Dockerfile ubicado en el directorio actual
     restart: "no"
     ports:
-      - 80:80
+      - "80:80"  # Puerto expuesto para el servicio web
     volumes:
-      - ./erronka2_web:/var/www/html/  # Apache usará esta ruta para los archivos web
+      - ./erronka2_web:/var/www/html/  # Sincroniza archivos locales con Apache
     networks:
-      - app_network  # Apache también debe estar en la misma red
+      - app_network  # Red compartida con db y adminer
+    depends_on:
+      - db  # Garantiza que la base de datos esté lista antes de iniciar Apache
 
 volumes:
-  db_data:
+  db_data:  # Volumen persistente para la base de datos
 
 networks:
   app_network:
-    driver: bridge
+    driver: bridge  # Red bridge para comunicación interna entre contenedores

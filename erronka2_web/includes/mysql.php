@@ -2,7 +2,7 @@
 // Definir las credenciales de conexión
 $mysql_host = 'db';  // El nombre del servicio en Docker
 $mysql_user = 'rhemAdminer';  // El usuario de la base de datos
-$mysql_pass = "jS*5i9Q9Z9ox/_4lLVik'*z2KJNt<(1ZPo9Sr#ZiGJMW/1Br4yeJ%`bBzl5<'S+&";  // La contraseña del usuario (usando comillas dobles)
+$mysql_pass = "jS*5i9Q9Z9ox/_4lLVik'*z2KJNt<(1ZPo9Sr#ZiGJMW/1Br4yeJ%`bBzl5<'S+&";
 $mysql_db = 'rhem';  // El nombre de la base de datos
 
 // Conectar a la base de datos
