@@ -1,4 +1,5 @@
 <?php
+session_start();
 $search="";
 $testua="";
 if (isset($_GET['keyword']) && $_GET['keyword'] != '') {
@@ -28,6 +29,8 @@ if(sizeof($produktuak) == 0){
 }
 else{
 ?>
+    <h1>Kaixo <?php echo htmlspecialchars($_SESSION['izena'], ENT_QUOTES, 'UTF-8'); ?>!!</h1>
+
     <table width=1000 cellpadding=10 cellspacing=10 align=center>
     <?php
     foreach($produktuak as $data){

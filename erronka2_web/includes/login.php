@@ -1,41 +1,65 @@
 <?php
+session_start();
+require_once 'mysql.php'; // Archivo que maneja la conexión a la base de datos
 
-if (isset($_SESSION['admin']) && ($_SESSION['admin'] == 1)) {
-    echo "<div align=center><h5>You are already logged in</h5></div>";
+// Generar un token CSRF si no existe
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+if (isset($_SESSION['admin']) && $_SESSION['admin'] == 1) {
+    echo "<div align=center><h5>Logeatuta</h5></div>";
 } else {
-    if (isset($_POST['submit'])) {
-        $creds = mysqli_query($conx, "SELECT * FROM users WHERE username='" . $_POST['username'] . "' AND password='" . md5($_POST['password']) . "'");
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
+        // Verificar token CSRF
+        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+            die("CSRF token inválido.");
+        }
 
-        $creds = mysqli_fetch_array($creds);
-        if ($creds) {
-            $_SESSION['username'] = $creds['username'];
-            $_SESSION['password'] = $creds['password'];
-            $_SESSION['admin'] = 1;
-            // Redirección con meta
-            echo '<meta http-equiv="refresh" content="0;url=' . $_SERVER['PHP_SELF'] . '">';
-            exit;
+        // Prevenir inyección SQL utilizando sentencias preparadas
+        $stmt = $conx->prepare("SELECT * FROM users WHERE username = ?");
+        $stmt->bind_param("s", $_POST['username']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result && $result->num_rows > 0) {
+            $user = $result->fetch_assoc();
+
+            // Verificar contraseña usando password_verify()
+            if (password_verify($_POST['password'], $user['password'])) {
+                // Inicio de sesión exitoso
+                $_SESSION['username'] = $user['izena'];
+                $_SESSION['izena'] = $user['izena'];
+                echo "<script>window.location.href='" . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . "';</script>";
+                exit;
+            } else {
+                // Contraseña incorrecta
+                echo "<script>window.location.href='" . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . "?action=login';</script>";
+                exit;
+            }
         } else {
-            // Redirección con meta
-            echo '<meta http-equiv="refresh" content="0;url=' . $_SERVER['PHP_SELF'] . '?action=login">';
+            // Usuario no encontrado
+            echo "<script>window.location.href='" . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . "?action=login';</script>";
             exit;
         }
     } else {
-?>
-
-  <div align=center>
-    <fieldset style=width:300;>
-    <legend><b>Login</b></legend>
-        <form action="<?php echo $_SERVER['PHP_SELF'] . "?action=login"; ?>" method="post">
-            <br>
-            Username/Email: <input type=text name=username><br>
-            Password: <input type=password name=password><br>
-            <br><input type=submit name="submit" value=Login><br>
-        </form>
-    </fieldset>
-  </div>
-
-<?php
+        ?>
+        <div align=center>
+            <fieldset style="width:300px;">
+                <legend><b>Login</b></legend>
+                <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . "?action=login"; ?>" method="post">
+                    <br>
+                    <label>Username/Email:</label>
+                    <input type="text" name="username" required pattern="[A-Za-z0-9@._-]+"><br>
+                    <label>Password:</label>
+                    <input type="password" name="password" required minlength="8"><br>
+                    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>" />
+                    <br>
+                    <input type="submit" name="submit" value="Login"><br>
+                </form>
+            </fieldset>
+        </div>
+        <?php
     }
 }
-
 ?>

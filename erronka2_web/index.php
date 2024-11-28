@@ -3,6 +3,11 @@ session_start();
 include("conf.php");
 include("includes/mysql.php");
 
+// Generar un token CSRF si no existe
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -12,7 +17,6 @@ include("includes/mysql.php");
 </head>
 <body>
 <div align="center">
-<!--<fieldset class=body_container id=body_container>-->
 <table cellspacing="5" cellpadding="5">
 <tr>
 <td>
@@ -29,7 +33,7 @@ include("includes/mysql.php");
 
 <?php
 if (isset($_SESSION['admin']) && ($_SESSION['admin'] == 1)) {
-    echo "<h3>Ongi Etorri " . $_SESSION['username'];
+    echo "<h3>Ongi Etorri " . htmlspecialchars($_SESSION['username'], ENT_QUOTES, 'UTF-8');
     if ($_SESSION['username'] == "admin@bdweb") {
         echo " | <a href=" . $_SERVER['PHP_SELF'] . "?action=account>Kontua</a> | <a href=" . $_SERVER['PHP_SELF'] . "?action=updel>Igo/Ezabatu</a> | <a href=" . $_SERVER['PHP_SELF'] . "?action=logout>Saioa itxi</a> | <a href=" . $_SERVER['PHP_SELF'] . ">Hasiera</a></h3>";
     } else {
@@ -40,7 +44,8 @@ if (isset($_SESSION['admin']) && ($_SESSION['admin'] == 1)) {
 }
 ?>
 <form name="search" method="get" action="<?php echo $_SERVER['PHP_SELF'] . '?action=search'; ?>" id="search">
-    <input type="text" value="" name="keyword"/>
+    <input type="text" value="" name="keyword" pattern="[A-Za-z0-9\s]+" title="Bakarrik letrak idatzi ahal dira"/>
+    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>" />
     <input type="submit" name="search" value="Bilatu"/>
 </form>
 
@@ -54,8 +59,8 @@ if (isset($_GET['action'])) {
             if (isset($_SESSION['admin']) && ($_SESSION['admin'] == 1) && ($_SESSION['username'] == 'admin@bdweb')) {
                 include("includes/updel.php");
             } else {
-                header("Location: " . $_SERVER['PHP_SELF']);
-                exit; // Evita continuar ejecutando el script después de la redirección.
+                echo '<meta http-equiv="refresh" content="0;url=' . $_SERVER['PHP_SELF'] . '">';
+                exit; 
             }
             break;
         case "register":
@@ -74,13 +79,13 @@ if (isset($_GET['action'])) {
             if (isset($_SESSION['admin']) && ($_SESSION['admin'] == 1)) {
                 include("includes/account.php");
             } else {
-                header("Location: " . $_SERVER['PHP_SELF']);
+                echo '<meta http-equiv="refresh" content="0;url=' . $_SERVER['PHP_SELF'] . '">';
                 exit;
             }
             break;
         case "logout":
             session_destroy();
-            header("Location: " . $_SERVER['PHP_SELF']);
+            echo '<meta http-equiv="refresh" content="0;url=' . $_SERVER['PHP_SELF'] . '">';
             exit;
             break;
         default:
@@ -95,7 +100,6 @@ if (isset($_GET['action'])) {
 <hr width="1000" size="5">
 <div align="center">
     <b>Proiektua <?php echo $version; ?></b> <br>
-<!--</fieldset>-->
 </div>
 </body>
 </html>

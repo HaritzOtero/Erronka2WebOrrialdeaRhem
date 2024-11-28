@@ -1,36 +1,42 @@
 <?php
 // assign defaults
-$data = array('email' 		=> 'email',
-              'firstname' 	=> 'nombre',
-              'lastname' 	=> 'apellidos',
-              'postcode' 	=> 'codigo postal',
-              'city' 		=> 'ciudad',
-              'stateProv' 	=> 'provincia',
-              'country'		=> 'pais',
-              'telephone' 	=> 'telefono',
-              'password' 	=> 'contraseña',
-              'password2' 	=> 'repetir contraseña',
+$data = array('email'       => '',
+              'firstname'   => '',
+              'lastname'    => '',
+              'postcode'    => '',
+              'city'        => '',
+              'stateProv'   => '',
+              'country'     => '',
+              'telephone'   => '',
+              'password'    => '',
+              'password2'   => '',
               'imagen'      => ''
 );
-$error = array('email' 	  => '',
+$error = array('email'     => '',
                'firstname' => '',
                'lastname'  => '',
-               'city'	  => '',
+               'city'      => '',
                'stateProv' => '',
-               'country'	  => '',
+               'country'   => '',
                'postcode'  => '',
                'telephone' => '',
                'password'  => '',
+               'imagen'    => ''
 );
 
-if (isset($_POST['data'])) {
-    $data = $_POST['data'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $data = filter_input_array(INPUT_POST, [
+        'data' => [
+            'filter' => FILTER_SANITIZE_STRING,
+            'flags'  => FILTER_REQUIRE_ARRAY
+        ]
+    ])['data'];
 
     // Validar la imagen
     if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] == 0) {
         $valid_extensions = ['jpg', 'jpeg', 'png', 'gif'];
-        $file_extension = pathinfo($_FILES['imagen']['name'], PATHINFO_EXTENSION);
-        
+        $file_extension = strtolower(pathinfo($_FILES['imagen']['name'], PATHINFO_EXTENSION));
+
         // Comprobar tipo de archivo
         if (!in_array($file_extension, $valid_extensions)) {
             $error['imagen'] = "Formato de imagen no permitido.";
@@ -42,47 +48,55 @@ if (isset($_POST['data'])) {
         }
 
         if (empty($error['imagen'])) {
-            $path = "perfiles/" . basename($_FILES['imagen']['name']);
-            move_uploaded_file($_FILES['imagen']['tmp_name'], $path);
-            $data['imagen'] = basename($_FILES['imagen']['name']);
+            $path = "perfiles/" . uniqid() . '.' . $file_extension; // Nombre único
+            if (!move_uploaded_file($_FILES['imagen']['tmp_name'], $path)) {
+                $error['imagen'] = "Error al subir la imagen.";
+            } else {
+                $data['imagen'] = $path;
+            }
         }
     }
 
     // Validación de campos
-    if (empty($data['email'])) {
-        $error['email'] = "El email es obligatorio.";
+    if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+        $error['email'] = "Emailaren formatua ez da egokia.";
     }
 
-    if ($data['password'] != $data['password2']) {
-        $error['password'] = "Las contraseñas no coinciden.";
+    if ($data['password'] !== $data['password2']) {
+        $error['password'] = "Pasahitzak ez dira berdinak.";
     }
 
-    if (empty($error['email']) && empty($error['password'])) {
+    if (strlen($data['password']) < 8) {
+        $error['password'] = "Pasahitza 8 karaktere edo gehiago izan behar ditu";
+    }
+
+    if (empty($error['email']) && empty($error['password']) && empty($error['imagen'])) {
         // Usar password_hash para almacenar contraseñas
         $hashed_password = password_hash($data['password'], PASSWORD_DEFAULT);
 
         // Sentencia preparada para evitar inyección SQL
         $sql = "INSERT INTO users (username, password, izena, abizena, hiria, lurraldea, herrialdea, postakodea, telefonoa, irudia) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = mysqli_prepare($conx, $sql);
-        mysqli_stmt_bind_param($stmt, "ssssssssss", 
-                               $data['email'], 
-                               $hashed_password, 
-                               $data['firstname'], 
-                               $data['lastname'], 
-                               $data['city'], 
-                               $data['stateProv'], 
-                               $data['country'], 
-                               $data['postcode'], 
-                               $data['telephone'], 
-                               $data['imagen']);
-        
-        if (!mysqli_stmt_execute($stmt)) {
-            die('Error: ' . mysqli_error($conx));
+        $stmt = $conx->prepare($sql);
+        $stmt->bind_param("ssssssssss", 
+                          $data['email'], 
+                          $hashed_password, 
+                          htmlspecialchars($data['firstname'], ENT_QUOTES, 'UTF-8'), 
+                          htmlspecialchars($data['lastname'], ENT_QUOTES, 'UTF-8'), 
+                          htmlspecialchars($data['city'], ENT_QUOTES, 'UTF-8'), 
+                          htmlspecialchars($data['stateProv'], ENT_QUOTES, 'UTF-8'), 
+                          htmlspecialchars($data['country'], ENT_QUOTES, 'UTF-8'), 
+                          htmlspecialchars($data['postcode'], ENT_QUOTES, 'UTF-8'), 
+                          htmlspecialchars($data['telephone'], ENT_QUOTES, 'UTF-8'), 
+                          $data['imagen']);
+
+        if (!$stmt->execute()) {
+            die('Error: ' . $stmt->error);
         } else {
             echo '<meta http-equiv="refresh" content="0;url=index.php">';
             exit;
         }
+        
     }
 }
 ?>
@@ -92,68 +106,67 @@ if (isset($_POST['data'])) {
     <br/>
     <div class="register">
         <h2>Erregistroa egin</h2>
-        <br/>
-        <b>Introduce la información.</b>
-        <br/>
-        <form action="<?php echo $_SERVER['PHP_SELF']."?action=register"; ?>" method="POST" enctype="multipart/form-data">
+
+        <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']) . "?action=register"; ?>" method="POST" enctype="multipart/form-data">
             <p>
                 <label>Email/username: </label>
-                <input type="text" name="data[email]" value="<?php echo $data['email']; ?>" />
-                <?php if ($error['email']) echo '<p>', $error['email']; ?>
+                <input type="email" name="data[email]" value="<?php echo htmlspecialchars($data['email'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required />
+                <?php if ($error['email']) echo '<p>' . htmlspecialchars($error['email'], ENT_QUOTES, 'UTF-8'); ?>
             </p>
             <p>
                 <label>Izena: </label>
-                <input type="text" name="data[firstname]" value="<?php echo $data['firstname']; ?>" />
-                <?php if ($error['firstname']) echo '<p>', $error['firstname']; ?>
+                <input type="text" name="data[firstname]" value="<?php echo htmlspecialchars($data['firstname'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required pattern="[A-Za-zÀ-ÿ\s]+" title=" Bakarrik letrak jarri ahal dira" />
+                <?php if ($error['firstname']) echo '<p>' . htmlspecialchars($error['firstname'], ENT_QUOTES, 'UTF-8'); ?>
             </p>
             <p>
                 <label>Abizena: </label>
-                <input type="text" name="data[lastname]" value="<?php echo $data['lastname']; ?>" />
-                <?php if ($error['lastname']) echo '<p>', $error['lastname']; ?>
+                <input type="text" name="data[lastname]" value="<?php echo htmlspecialchars($data['lastname'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required pattern="[A-Za-zÀ-ÿ\s]+" title=" Bakarrik letrak jarri ahal dira" />
+                <?php if ($error['lastname']) echo '<p>' . htmlspecialchars($error['lastname'], ENT_QUOTES, 'UTF-8'); ?>
             </p>
             <p>
                 <label>Hiria: </label>
-                <input type="text" name="data[city]" value="<?php echo $data['city']; ?>" />
-                <?php if ($error['city']) echo '<p>', $error['city']; ?>
+                <input type="text" name="data[city]" value="<?php echo htmlspecialchars($data['city'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required pattern="[A-Za-zÀ-ÿ\s]+" title=" Bakarrik letrak jarri ahal dira" />
+                <?php if ($error['city']) echo '<p>' . htmlspecialchars($error['city'], ENT_QUOTES, 'UTF-8'); ?>
             </p>
             <p>
                 <label>Lurraldea: </label>
-                <input type="text" name="data[stateProv]" value="<?php echo $data['stateProv']; ?>" />
-                <?php if ($error['stateProv']) echo '<p>', $error['stateProv']; ?>
+                <input type="text" name="data[stateProv]" value="<?php echo htmlspecialchars($data['stateProv'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required pattern="[A-Za-zÀ-ÿ\s]+" title=" Bakarrik letrak jarri ahal dira" />
+                <?php if ($error['stateProv']) echo '<p>' . htmlspecialchars($error['stateProv'], ENT_QUOTES, 'UTF-8'); ?>
             </p>
             <p>
                 <label>Herrialdea: </label>
-                <input type="text" name="data[country]" value="<?php echo $data['country']; ?>" />
-                <?php if ($error['country']) echo '<p>', $error['country']; ?>
+                <input type="text" name="data[country]" value="<?php echo htmlspecialchars($data['country'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required pattern="[A-Za-zÀ-ÿ\s]+" title=" Bakarrik letrak jarri ahal dira" />
+                <?php if ($error['country']) echo '<p>' . htmlspecialchars($error['country'], ENT_QUOTES, 'UTF-8'); ?>
             </p>
             <p>
                 <label>Postakodea: </label>
-                <input type="text" name="data[postcode]" value="<?php echo $data['postcode']; ?>" />
-                <?php if ($error['postcode']) echo '<p>', $error['postcode']; ?>
+                <input type="text" name="data[postcode]" value="<?php echo htmlspecialchars($data['postcode'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required pattern="\d{4,10}" title=" 4-10 digito bitartean eduki behar ditu" />
+                <?php if ($error['postcode']) echo '<p>' . htmlspecialchars($error['postcode'], ENT_QUOTES, 'UTF-8'); ?>
             </p>
             <p>
                 <label>Telefonoa: </label>
-                <input type="text" name="data[telephone]" value="<?php echo $data['telephone']; ?>" />
-                <?php if ($error['telephone']) echo '<p>', $error['telephone']; ?>
+                <input type="text" name="data[telephone]" value="<?php echo htmlspecialchars($data['telephone'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required pattern="\+?\d{7,15}" title=" 7-15 digitoko zenbakia izan behar du eta nazioarteko prefijoa izan ahal du." />
+                <?php if ($error['telephone']) echo '<p>' . htmlspecialchars($error['telephone'], ENT_QUOTES, 'UTF-8'); ?>
             </p>
             <p>
                 <label>Pasahitza: </label>
-                <input type="password" name="data[password]" value="<?php echo $data['password']; ?>" />
-                <?php if ($error['password']) echo '<p>', $error['password']; ?>
+                <input type="password" name="data[password]" value="" required minlength="8" title=" Gutxienez 8 karaktere izan behar ditu" />
+                <?php if ($error['password']) echo '<p>' . htmlspecialchars($error['password'], ENT_QUOTES, 'UTF-8'); ?>
             </p>
             <p>
                 <label>Pasahitza errepikatu: </label>
-                <input type="password" name="data[password2]" value="<?php echo $data['password2']; ?>" />
+                <input type="password" name="data[password2]" value="" required minlength="8" title=" Gutxienez 8 karaktere izan behar ditu" />
             </p>
             <p>
                 <label>Irudia aukeratu:</label>
-                <input name="imagen" type="file" />
-                <?php if ($error['imagen']) echo '<p>', $error['imagen']; ?>
+                <input name="imagen" type="file" accept="image/jpeg, image/png, image/gif" />
+                <?php if ($error['imagen']) echo '<p>' . htmlspecialchars($error['imagen'], ENT_QUOTES, 'UTF-8'); ?>
             </p>
             <p>
-                <input type="reset" name="data[clear]" value="Clear" class="button"/>
-                <input type="submit" name="data[submit]" value="Submit" class="button marL10"/>
+                <input type="reset" name="data[clear]" value="Clear" class="button" />
+                <input type="submit" name="data[submit]" value="Submit" class="button marL10" />
             </p>
         </form>
     </div>
 </div>
+
