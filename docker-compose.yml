@@ -32,9 +32,10 @@ services:
     build: ./  # Dockerfile ubicado en el directorio actual
     restart: "no"
     ports:
-      - "80:80"  # Puerto expuesto para el servicio web
+      - "443:443"  # Puerto expuesto para el servicio web
     volumes:
       - ./erronka2_web:/var/www/html/  # Sincroniza archivos locales con Apache
+      - apache_config:/etc/apache2  # Volumen para persistir la configuración de Apache
     networks:
       - app_network  # Red compartida con db y adminer
     depends_on:
@@ -42,7 +43,9 @@ services:
 
 volumes:
   db_data:  # Volumen persistente para la base de datos
+  apache_config:  # Volumen persistente para la configuración de Apache
 
 networks:
   app_network:
     driver: bridge  # Red bridge para comunicación interna entre contenedores
+
