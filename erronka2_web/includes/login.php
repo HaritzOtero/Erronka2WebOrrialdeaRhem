@@ -35,11 +35,11 @@ if (isset($_SESSION['admin']) && $_SESSION['admin'] == 1) {
                 exit;
             } else {
                 // Contraseña incorrecta
-                $_SESSION['error_message'] = 'Contraseña incorrecta. Por favor, inténtalo de nuevo.';
+                $_SESSION['error_message'] = 'Errorea loginean';
             }
         } else {
             // Usuario no encontrado
-            $_SESSION['error_message'] = 'Usuario no encontrado. Por favor, verifique su nombre de usuario y contraseña.';
+            $_SESSION['error_message'] = 'Errorea loginean';
         }
     }
     ?>
