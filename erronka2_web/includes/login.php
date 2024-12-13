@@ -30,36 +30,45 @@ if (isset($_SESSION['admin']) && $_SESSION['admin'] == 1) {
                 // Inicio de sesión exitoso
                 $_SESSION['username'] = $user['izena'];
                 $_SESSION['izena'] = $user['izena'];
+                // Redirigir a la misma página (login exitoso)
                 echo "<script>window.location.href='" . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . "';</script>";
                 exit;
             } else {
                 // Contraseña incorrecta
-                echo "<script>window.location.href='" . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . "?action=login';</script>";
-                exit;
+                $_SESSION['error_message'] = 'Contraseña incorrecta. Por favor, inténtalo de nuevo.';
             }
         } else {
             // Usuario no encontrado
-            echo "<script>window.location.href='" . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . "?action=login';</script>";
-            exit;
+            $_SESSION['error_message'] = 'Usuario no encontrado. Por favor, verifique su nombre de usuario y contraseña.';
         }
-    } else {
-        ?>
-        <div align=center>
-            <fieldset style="width:300px;">
-                <legend><b>Login</b></legend>
-                <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . "?action=login"; ?>" method="post">
-                    <br>
-                    <label>Username/Email:</label>
-                    <input type="text" name="username" required pattern="[A-Za-z0-9@._-]+"><br>
-                    <label>Password:</label>
-                    <input type="password" name="password" required minlength="8"><br>
-                    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>" />
-                    <br>
-                    <input type="submit" name="submit" value="Login"><br>
-                </form>
-            </fieldset>
-        </div>
-        <?php
     }
+    ?>
+
+    <div align=center>
+        <fieldset style="width:300px;">
+            <legend><b>Login</b></legend>
+            <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . "?action=login"; ?>" method="post">
+                <br>
+                <label>Username/Email:</label>
+                <input type="text" name="username" required pattern="[A-Za-z0-9@._-]+"><br>
+                <label>Password:</label>
+                <input type="password" name="password" required minlength="8"><br>
+                <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>" />
+                <br>
+                <input type="submit" name="submit" value="Login"><br>
+            </form>
+
+            <?php
+            // Mostrar mensaje de error si existe
+            if (isset($_SESSION['error_message'])) {
+                echo "<div style='color: red;'>" . $_SESSION['error_message'] . "</div>";
+                // Limpiar el mensaje de error después de mostrarlo
+                unset($_SESSION['error_message']);
+            }
+            ?>
+        </fieldset>
+    </div>
+
+    <?php
 }
 ?>
