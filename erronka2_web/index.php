@@ -34,7 +34,7 @@ if (empty($_SESSION['csrf_token'])) {
 <?php
 if (isset($_SESSION['admin']) && ($_SESSION['admin'] == 1)) {
     echo "<h3>Ongi Etorri " . htmlspecialchars($_SESSION['username'], ENT_QUOTES, 'UTF-8');
-    if ($_SESSION['username'] == "admin@bdweb") {
+    if ($_SESSION['username'] == "admin@bdweb.com") {
         echo " | <a href=" . $_SERVER['PHP_SELF'] . "?action=account>Kontua</a> | <a href=" . $_SERVER['PHP_SELF'] . "?action=updel>Igo/Ezabatu</a> | <a href=" . $_SERVER['PHP_SELF'] . "?action=logout>Saioa itxi</a> | <a href=" . $_SERVER['PHP_SELF'] . ">Hasiera</a></h3>";
     } else {
         echo " | <a href=" . $_SERVER['PHP_SELF'] . "?action=account>Kontua</a> | <a href=" . $_SERVER['PHP_SELF'] . "?action=logout>Saioa itxi</a> | <a href=" . $_SERVER['PHP_SELF'] . ">Hasiera</a></h3>";
@@ -56,7 +56,7 @@ if (isset($_SESSION['admin']) && ($_SESSION['admin'] == 1)) {
 if (isset($_GET['action'])) {
     switch ($_GET['action']) {
         case "updel":
-            if (isset($_SESSION['admin']) && ($_SESSION['admin'] == 1) && ($_SESSION['username'] == 'admin@bdweb')) {
+            if (isset($_SESSION['admin']) && ($_SESSION['admin'] == 1) && ($_SESSION['username'] == 'admin@bdweb.com')) {
                 include("includes/updel.php");
             } else {
                 echo '<meta http-equiv="refresh" content="0;url=' . $_SERVER['PHP_SELF'] . '">';
