@@ -4,30 +4,33 @@
 
   if(isset($_SESSION['admin']) && ($_SESSION['admin']==1)){
       mysqli_query($conx,"UPDATE produktuak SET descripzioa = '' WHERE ID LIKE ".$_GET['del_id']);
-    header("Location: ".$_SERVER['PHP_SELF']);
+    echo "<script>window.location.href = '" . $_SERVER['PHP_SELF'] . "';</script>";
+    exit;  // Aseguramos que el código no se siga ejecutando
   }else{
-    header("Location: ".$_SERVER['PHP_SELF']);
+    echo "<script>window.location.href = '" . $_SERVER['PHP_SELF'] . "';</script>";
+    exit;  // Aseguramos que el código no se siga ejecutando
   }
 
 }*/
 
-if(isset($_GET['postdescription'])){
-    $crntquery = mysqli_query($conx,"SELECT deskripzioa, salneurria FROM produktuak WHERE ID LIKE ".$_GET['pic_id']);
+if (isset($_GET['postdescription'])) {
+    $crntquery = mysqli_query($conx, "SELECT deskripzioa, salneurria FROM produktuak WHERE ID LIKE ".$_GET['pic_id']);
     $crntcomm = mysqli_fetch_array($crntquery);
 
-   $deskripzioa = $_POST['deskripzioa'];
+    $deskripzioa = $_POST['deskripzioa'];
 
     if ($_POST['salneurria'] != '') {
         $salneurria = $_POST['salneurria'];
-    }else{
+    } else {
         $salneurria = $crntcomm['salneurria'];
     }
 
-    mysqli_query($conx,"UPDATE produktuak SET deskripzioa = '".$deskripzioa."', salneurria = ".$salneurria." WHERE ID LIKE ".$_GET['pic_id']);
+    mysqli_query($conx, "UPDATE produktuak SET deskripzioa = '".$deskripzioa."', salneurria = ".$salneurria." WHERE ID LIKE ".$_GET['pic_id']);
 
-    header("Location: ".$_SERVER['PHP_SELF']);
-  
-}else{
+    // Redirigir con JavaScript
+    echo "<script>window.location.href = '" . $_SERVER['PHP_SELF'] . "';</script>";
+    exit;  // Aseguramos que el código no se siga ejecutando
+} else {
 
 ?>
 
@@ -37,7 +40,7 @@ if(isset($_GET['postdescription'])){
     <br>
     <?php
 
-        $picquery = mysqli_query($conx,"SELECT * FROM produktuak WHERE ID = ".$_GET['pic_id']);
+        $picquery = mysqli_query($conx, "SELECT * FROM produktuak WHERE ID = ".$_GET['pic_id']);
         $data = mysqli_fetch_array($picquery);
 
         echo "<h4>".$data['izena']." - ".$data['salneurria']."€</h4>";
@@ -66,3 +69,4 @@ if(isset($_GET['postdescription'])){
 }
 
 ?>
+

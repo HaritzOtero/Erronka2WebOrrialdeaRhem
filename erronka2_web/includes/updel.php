@@ -1,25 +1,34 @@
 <?php
-if($_SESSION['username'] != "admin@bdweb"){
-  header("Location: ".$_SERVER['PHP_SELF']);
+session_start();
+
+// Verificar si el usuario es administrador
+if (!isset($_SESSION['admin']) || $_SESSION['admin'] != 1) {
+    // Redirigir al índice u otra página
+    header("Location: index.php"); // Cambia "index.php" por la página que corresponda
+    exit;
 }
 
-if(isset($_GET['pic_id'])){
-    $filequery = mysqli_query($conx,"SELECT pic FROM produktuak WHERE id LIKE ".$_GET['pic_id']);
-  $delfile = mysqli_fetch_array($filequery);
-  unlink("images/".$delfile['pic']);
-  mysqli_query($conx,"DELETE FROM produktuak WHERE id = ".$_GET['pic_id']);
-  echo "<div align=center><h5>Produktua ezabatuta</h5></div><br>";
+// Establecer conexión con la base de datos (asegúrate de que $conx esté definido)
+require_once 'mysql.php';
+
+if (isset($_GET['pic_id'])) {
+    // Eliminar producto
+    $filequery = mysqli_query($conx, "SELECT pic FROM produktuak WHERE id LIKE " . $_GET['pic_id']);
+    $delfile = mysqli_fetch_array($filequery);
+    unlink("images/" . $delfile['pic']);
+    mysqli_query($conx, "DELETE FROM produktuak WHERE id = " . $_GET['pic_id']);
+    echo "<div align=center><h5>Produktua ezabatuta</h5></div><br>";
 }
 
-if(isset($_GET['upload'])){
-    $path = "images/".basename($_FILES['upfile']['name']);
+if (isset($_GET['upload'])) {
+    // Subir un nuevo producto
+    $path = "images/" . basename($_FILES['upfile']['name']);
     $uploader = $_SESSION['username'];
     move_uploaded_file($_FILES['upfile']['tmp_name'], $path);
-    mysqli_query($conx,"INSERT INTO produktuak (izena, deskripzioa, salneurria, pic, stock) VALUES ('"
-        .$_POST['izena']."', '".$_POST['deskripzioa']."', ".$_POST['salneurria'].", '".$_FILES['upfile']['name']."', ".$_POST['stock'].")");
-    echo "<div align=center><h5>Produktu \"".$_POST['izena']."\" txertatuta</h5></div><br>";
+    mysqli_query($conx, "INSERT INTO produktuak (izena, deskripzioa, salneurria, pic, stock) VALUES ('"
+        . $_POST['izena'] . "', '" . $_POST['deskripzioa'] . "', " . $_POST['salneurria'] . ", '" . $_FILES['upfile']['name'] . "', " . $_POST['stock'] . ")");
+    echo "<div align=center><h5>Produktu \"" . $_POST['izena'] . "\" txertatuta</h5></div><br>";
 }
-
 ?>
 
 <div align=center>

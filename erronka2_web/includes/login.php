@@ -30,6 +30,13 @@ if (isset($_SESSION['admin']) && $_SESSION['admin'] == 1) {
                 // Inicio de sesión exitoso
                 $_SESSION['username'] = $user['izena'];
                 $_SESSION['izena'] = $user['izena'];
+
+                // Verificar si el usuario es admin
+                if ($_POST['username'] === 'admin@bdweb.com') {
+                    $_SESSION['admin'] = 1;
+                    $_SESSION['username'] = "admin@bdweb.com";
+                }
+
                 // Redirigir a la misma página (login exitoso)
                 echo "<script>window.location.href='" . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . "';</script>";
                 exit;
@@ -72,3 +79,4 @@ if (isset($_SESSION['admin']) && $_SESSION['admin'] == 1) {
     <?php
 }
 ?>
+

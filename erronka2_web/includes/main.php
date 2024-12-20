@@ -61,7 +61,7 @@ else{
                 <?php
                 if(isset($_SESSION['admin']) && ($_SESSION['admin']==1))
                     {
-                        if($_SESSION['username'] == 'admin@bdweb'){
+                        if($_SESSION['username'] == 'admin@bdweb.com'){
                             ?>
                             <table width=100% cellpadding=2 cellspacing=2 align=center>
                             <tr><td width=50% align=left>

@@ -70,6 +70,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error['password'] = "Pasahitza 8 karaktere edo gehiago izan behar ditu";
     }
 
+    // Comprobar si el email ya existe en la base de datos
+    if (empty($error['email'])) {
+        $sql_check = "SELECT COUNT(*) FROM users WHERE username = ?";
+        $stmt_check = $conx->prepare($sql_check);
+        $stmt_check->bind_param("s", $data['email']);
+        $stmt_check->execute();
+        $stmt_check->bind_result($user_count);
+        $stmt_check->fetch();
+        $stmt_check->close();
+
+        if ($user_count > 0) {
+            $error['email'] = "Erabiltzailea jadanik existitzen da.";
+        }
+    }
+
     if (empty($error['email']) && empty($error['password']) && empty($error['imagen'])) {
         // Usar password_hash para almacenar contraseñas
         $hashed_password = password_hash($data['password'], PASSWORD_DEFAULT);
@@ -96,9 +111,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo '<meta http-equiv="refresh" content="0;url=index.php">';
             exit;
         }
-        
     }
 }
+
 ?>
 
 <!-- Formulario de registro -->
@@ -159,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </p>
             <p>
                 <label>Irudia aukeratu:</label>
-                <input name="imagen" type="file" accept="image/jpeg, image/png, image/gif" />
+                <input name="imagen" type="file" accept="image/jpeg, image/png, image/gif" required/>
                 <?php if ($error['imagen']) echo '<p>' . htmlspecialchars($error['imagen'], ENT_QUOTES, 'UTF-8'); ?>
             </p>
             <p>
