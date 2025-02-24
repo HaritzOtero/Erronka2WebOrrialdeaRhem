@@ -16,40 +16,52 @@ if (isset($_SESSION['admin']) && $_SESSION['admin'] == 1) {
             die("CSRF token inválido.");
         }
 
-        // Prevenir inyección SQL utilizando sentencias preparadas
-        $stmt = $conx->prepare("SELECT * FROM users WHERE username = ?");
-        $stmt->bind_param("s", $_POST['username']);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        // Verificar reCAPTCHA
+        $recaptcha_secret = "6Lf60eAqAAAAAPXJB6Gu7qG5-GTSvrdP8qkx2f-Z";
+        $recaptcha_response = $_POST['g-recaptcha-response'];
+        $verify = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$recaptcha_secret}&response={$recaptcha_response}");
+        $captcha_success = json_decode($verify);
 
-        if ($result && $result->num_rows > 0) {
-            $user = $result->fetch_assoc();
+        if (!$captcha_success->success) {
+            $_SESSION['error_message'] = "Captcha inválido.";
+        } else {
+            // Prevenir inyección SQL utilizando sentencias preparadas
+            $stmt = $conx->prepare("SELECT * FROM users WHERE username = ?");
+            $stmt->bind_param("s", $_POST['username']);
+            $stmt->execute();
+            $result = $stmt->get_result();
 
-            // Verificar contraseña usando password_verify()
-            if (password_verify($_POST['password'], $user['password'])) {
-                // Inicio de sesión exitoso
-                $_SESSION['username'] = $user['izena'];
-                $_SESSION['izena'] = $user['izena'];
+            if ($result && $result->num_rows > 0) {
+                $user = $result->fetch_assoc();
 
-                // Verificar si el usuario es admin
-                if ($_POST['username'] === 'admin@bdweb.com') {
-                    $_SESSION['admin'] = 1;
-                    $_SESSION['username'] = "admin@bdweb.com";
+                // Verificar contraseña usando password_verify()
+                if (password_verify($_POST['password'], $user['password'])) {
+                    // Inicio de sesión exitoso
+                    $_SESSION['username'] = $user['izena'];
+                    $_SESSION['izena'] = $user['izena'];
+
+                    // Verificar si el usuario es admin
+                    if ($_POST['username'] === 'admin@bdweb.com') {
+                        $_SESSION['admin'] = 1;
+                        $_SESSION['username'] = "admin@bdweb.com";
+                    }
+
+                    // Redirigir a la misma página (login exitoso)
+                    echo "<script>window.location.href='" . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . "';</script>";
+                    exit;
+                } else {
+                    // Contraseña incorrecta
+                    $_SESSION['error_message'] = 'Errorea loginean';
                 }
-
-                // Redirigir a la misma página (login exitoso)
-                echo "<script>window.location.href='" . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . "';</script>";
-                exit;
             } else {
-                // Contraseña incorrecta
+                // Usuario no encontrado
                 $_SESSION['error_message'] = 'Errorea loginean';
             }
-        } else {
-            // Usuario no encontrado
-            $_SESSION['error_message'] = 'Errorea loginean';
         }
     }
     ?>
+
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
     <div align=center>
         <fieldset style="width:300px;">
@@ -61,6 +73,10 @@ if (isset($_SESSION['admin']) && $_SESSION['admin'] == 1) {
                 <label>Password:</label>
                 <input type="password" name="password" required minlength="8"><br>
                 <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>" />
+                
+                <!-- Google reCAPTCHA -->
+                <div class="g-recaptcha" data-sitekey="6Lf60eAqAAAAAFsNjYlzliCL-kaMpgvIlWSFqKp8"></div>
+                
                 <br>
                 <input type="submit" name="submit" value="Login"><br>
             </form>
